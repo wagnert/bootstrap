@@ -65,21 +65,53 @@ class ApplicationServer extends \Thread
     /**
      * Initialize and start the application server.
      *
-     * @param array $childs The storage to bind the services to
+     * @param \Stackable $logStreams The available log streams
+     * @param \Stackable $logFormats The available log formats
+     * @param \Stackable $childs     The storage to bind the services to
      */
-    public function __construct($childs)
+    public function __construct($logStreams, $logFormats, $childs)
     {
 
         // create a mutex to lock an comman
         $this->mutex = \Mutex::create();
 
+        // set to TRUE, because we swith to runlevel 1 immediately
+        $this->switching = true;
+
         // initialize the members
         $this->childs = $childs;
-        $this->switching = true;
+        $this->logStreams = $logStreams;
+        $this->logFormats = $logFormats;
         $this->runlevel = ApplicationServer::ADMINISTRATION;
+
+        // by default, we want to log to the STDOUT
+        $this->attachLogStream('default', fopen('php://stdout', 'rw'));
 
         // start the application server
         $this->start();
+    }
+
+    public function attachLogstream($name, $logStream, $logFormat = "%s\r\n")
+    {
+        $this->logFormats[$name] = $logFormat;
+        $this->logStreams[$name] = $logStream;
+    }
+
+    /**
+     * Simple logger method that writes the passed log messages.
+     * to a stream.
+     *
+     * @param string $message The message to log
+     *
+     * @return void
+     */
+    protected function log($message)
+    {
+        foreach ($this->logStreams as $name => $logStream) {
+            if (is_resource($logStream)) {
+                fwrite($logStream, sprintf($this->logFormats[$name], $message));
+            }
+        }
     }
 
     /**
@@ -104,9 +136,6 @@ class ApplicationServer extends \Thread
         $this->switching = true;
         $this->runlevel = $runlevel;
 
-        // print a message with the new runlevel to switch to
-        echo "Switch to new runlevel: $runlevel" . PHP_EOL;
-
         // unlock the server to execute next command
         \Mutex::unlock($this->mutex);
     }
@@ -118,15 +147,16 @@ class ApplicationServer extends \Thread
      */
     public function shutdown()
     {
-
         // check if there was a fatal error caused shutdown
         if ($lastError = error_get_last()) {
+            // initialize type + message
+            $type = 0;
+            $message = '';
             // extract the last error values
             extract($lastError);
-
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+               $this->log($message);
             }
         }
     }
@@ -159,7 +189,7 @@ class ApplicationServer extends \Thread
                 // check if the actual runlevel === the requested one
                 if ($actualRunlevel == $this->runlevel) {
                     // print a message and wait
-                    echo "Now start waiting in runlevel $actualRunlevel!!!" . PHP_EOL;
+                    $this->log("Now start waiting in runlevel $actualRunlevel!!!");
 
                     // singal that we've finished switching the runlevels and wait
                     $this->switching = false;
@@ -185,7 +215,7 @@ class ApplicationServer extends \Thread
                 $actualRunlevel = $newRunlevel;
 
             } catch (\Exception $e) {
-                echo $e->getMessage() . PHP_EOL;
+                $this->log($e->getMessage());
             }
 
         } while ($keepRunning);
@@ -209,7 +239,7 @@ class ApplicationServer extends \Thread
             unset ($this->childs[$runlevel][$name]);
 
             // print a message that the service has been stopped
-            echo "Successfully stopped service $name" . PHP_EOL;
+            $this->log("Successfully stopped service $name");
         }
     }
 
@@ -227,7 +257,7 @@ class ApplicationServer extends \Thread
     {
 
         // print a message with the new runlevel we switch to
-        echo "Now change runlevel to $newRunlevel" . PHP_EOL;
+        $this->log("Now change runlevel to $newRunlevel");
 
         // query the new runlevel
         switch ($newRunlevel) {

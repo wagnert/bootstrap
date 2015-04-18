@@ -73,12 +73,13 @@ class HttpServer extends \Thread
      */
     public function shutdown()
     {
-
         // check if there was a fatal error caused shutdown
         if ($lastError = error_get_last()) {
+            // initialize type + message
+            $type = 0;
+            $message = '';
             // extract the last error values
             extract($lastError);
-
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
                echo $message . PHP_EOL;

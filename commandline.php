@@ -2,7 +2,7 @@
 <?php
 
 /**
- * index.php
+ * commandline.php
  *
  * NOTICE OF LICENSE
  *
@@ -38,16 +38,26 @@ define('SERVER_AUTOLOADER', $autoloaderFile);
 // include the autoloader file
 require SERVER_AUTOLOADER;
 
-// initialize the storage for the log fromats/streams
-$logFormats = new \Stackable();
-$logStreams = new \Stackable();
+fwrite(STDOUT, "Please enter your Message (enter 'quit' to leave):\n");
 
-// initialize the storage for the runlevels
-$childs = new \Stackable();
-foreach (ApplicationServer::$runlevels as $runlevel) {
-    $childs[$runlevel] = new \Stackable();
-}
+$telnet = new Telnet('127.0.0.1', 1337);
+$telnet->connect();
 
-// initialize and start the application server
-$applicationServer = new ApplicationServer($logStreams, $logFormats, $childs);
-$applicationServer->join();
+do {
+
+    do {
+
+        $message = trim(fgets(STDIN));
+
+    } while ($message == '');
+
+    if (strcasecmp($message, 'quit') != 0) {
+
+        fwrite(STDOUT, $telnet->exec($message));
+        fwrite(STDOUT, PHP_EOL);
+
+    }
+
+} while (strcasecmp($message, 'quit') != 0);
+
+exit(0);
