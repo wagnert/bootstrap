@@ -76,12 +76,13 @@ class Console extends \Thread
      */
     public function shutdown()
     {
-
         // check if there was a fatal error caused shutdown
         if ($lastError = error_get_last()) {
+            // initialize type + message
+            $type = 0;
+            $message = '';
             // extract the last error values
             extract($lastError);
-
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
                echo $message . PHP_EOL;
@@ -123,8 +124,12 @@ class Console extends \Thread
         // wait for connections
         $socket->on('connection', function ($conn) use ($applicationServer) {
 
+            // attach the log stream for this connection
+            $applicationServer->attachLogStream($conn->getRemoteAddress(), $conn->stream);
+
             // write the appserver.io logo to the console
             $conn->write(Console::$logo);
+            $conn->write("\n $");
 
             // wait for user input => usually a command
             $conn->on('data', function ($data) use ($conn, $applicationServer) {
@@ -136,6 +141,7 @@ class Console extends \Thread
                 // check if command is available => MUST be a server's method name
                 if (method_exists($applicationServer, $methodName)) {
                     call_user_func_array(array($applicationServer, $methodName), $params);
+                    $conn->write("\n $");
                 } else {
                     $conn->write("Unknown command $methodName");
                 }
