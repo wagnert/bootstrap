@@ -39,6 +39,7 @@ class HttpServer extends \Thread
      */
     public function __construct()
     {
+        $this->running = false;
         $this->run = true;
         $this->start();
     }
@@ -101,16 +102,16 @@ class HttpServer extends \Thread
         // we need the autloader again
         require SERVER_AUTOLOADER;
 
-        // set the server state
-        $this->running = true;
-
         // initialize the array for the workers
         $workers = array();
 
         // intialize the threads and the socket
         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        socket_bind($socket, '0.0.0.0', 9081);
+        socket_bind($socket, '0.0.0.0', 80);
         socket_listen($socket);
+
+        // set the server state
+        $this->running = true;
 
         // query whether the socket has been created or not
         if ($socket) {
@@ -130,7 +131,7 @@ class HttpServer extends \Thread
             echo "Found " . sizeof($workers) . " workers!" . PHP_EOL;
 
             // prepare the URL and the options for the shutdown requests
-            $url = 'http://0.0.0.0:9081';
+            $url = 'http://0.0.0.0:80';
             $opts = array('http' =>
                 array(
                     'method'  => 'GET',

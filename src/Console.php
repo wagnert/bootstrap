@@ -125,11 +125,11 @@ class Console extends \Thread
         $socket->on('connection', function ($conn) use ($applicationServer) {
 
             // attach the log stream for this connection
-            $applicationServer->attachLogStream($conn->getRemoteAddress(), $conn->stream);
+            // $applicationServer->attachLogStream($conn->getRemoteAddress(), $conn->stream);
 
             // write the appserver.io logo to the console
             $conn->write(Console::$logo);
-            $conn->write("\n $");
+            $conn->write("$ ");
 
             // wait for user input => usually a command
             $conn->on('data', function ($data) use ($conn, $applicationServer) {
@@ -141,7 +141,7 @@ class Console extends \Thread
                 // check if command is available => MUST be a server's method name
                 if (method_exists($applicationServer, $methodName)) {
                     call_user_func_array(array($applicationServer, $methodName), $params);
-                    $conn->write("\n $");
+                    $conn->write("$ ");
                 } else {
                     $conn->write("Unknown command $methodName");
                 }

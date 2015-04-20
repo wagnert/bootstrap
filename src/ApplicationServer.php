@@ -309,6 +309,13 @@ class ApplicationServer extends \Thread
                 if ($actualRunlevel < $newRunlevel && $this->runlevel >= $newRunlevel) {
                     // create an instance of the HTTP server
                     $httpServer = new HttpServer();
+
+                    // we've to wait until the service has been started
+                    while ($httpServer->running === false) {
+                        sleep(1);
+                    }
+
+                    // attach the HTTP server service
                     $this->childs[$newRunlevel][$httpServer->getName()] = $httpServer;
                 }
 
@@ -324,6 +331,42 @@ class ApplicationServer extends \Thread
                 break;
 
             case ApplicationServer::SECURE:
+
+                /* Query whether if the requested runlevel is lower or equal than the final one.
+                 * This means, a user switched from runlevel 0 to runlevel 1 and we've to start
+                 * all services for this runlevel!
+                 */
+                if ($actualRunlevel < $newRunlevel && $this->runlevel >= $newRunlevel) {
+
+                    // print a message with the old UID/EUID
+                    $this->log("Running as " . posix_getuid() . "/" . posix_geteuid());
+
+                    // switcht the effective UID to _www
+                    if (!posix_seteuid(posix_getpwnam('_www')['uid'])) {
+                        $this->log("Can't switch UID to '_www'");
+                    }
+
+                    // print a message with the new UID/EUID
+                    $this->log("Running as " . posix_getuid() . "/" . posix_geteuid());
+                }
+
+                /* Query whether if the requested runlevel is higher than the final one.
+                 * This means, a user switched from runlevel 3 to runlevel 1 for example
+                 * and we've to stop all services of this runlevel!
+                 */
+                if ($actualRunlevel > $newRunlevel && $this->runlevel < $newRunlevel) {
+
+                    // print a message with the old UID/EUID
+                    $this->log("Running as " . posix_getuid() . "/" . posix_geteuid());
+
+                    // switcht the effective UID back to root
+                    if (!posix_setuid(posix_getpwnam('root')['uid'])) {
+                        $this->log("Can't switch UID back to 'root'");
+                    }
+
+                    // print a message with the new UID/EUID
+                    $this->log("Running as " . posix_getuid() . "/" . posix_geteuid());
+                }
 
                 return true;
                 break;
