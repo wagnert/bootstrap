@@ -85,7 +85,7 @@ class Console extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+                echo $message . PHP_EOL;
             }
         }
     }

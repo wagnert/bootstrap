@@ -131,7 +131,7 @@ class ApplicationServer extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               $this->logger->log($message);
+                $this->logger->log($message);
             }
         }
     }
@@ -158,9 +158,7 @@ class ApplicationServer extends \Thread
         $actualRunlevel = 0;
 
         do {
-
             try {
-
                 // check if the actual runlevel === the requested one
                 if ($actualRunlevel == $this->runlevel) {
                     // print a message and wait
@@ -207,7 +205,6 @@ class ApplicationServer extends \Thread
     {
         // iterate over all services and stop them
         foreach (array_keys($this->childs->get($runlevel)) as $name) {
-            
             // stop, kill and unset the service instance
             $this->childs->get($runlevel, $name)->stop();
             $this->childs->get($runlevel, $name)->kill();

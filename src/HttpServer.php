@@ -82,7 +82,7 @@ class HttpServer extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+                echo $message . PHP_EOL;
             }
         }
     }
@@ -114,7 +114,6 @@ class HttpServer extends \Thread
 
         // query whether the socket has been created or not
         if ($socket) {
-
             // we start 5 worker threads here
             $worker = 0;
             while (++ $worker < 5) {

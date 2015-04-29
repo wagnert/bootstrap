@@ -33,7 +33,7 @@ class ServiceFactory
 {
     /**
      * Defines storage for services
-     * 
+     *
      * @var array
      */
     public $services = array();
@@ -41,10 +41,10 @@ class ServiceFactory
     /**
      * Returns or creates the given service type instance with optional
      * refInstance injection on ctor
-     * 
+     *
      * @param string $serviceType The service classname to instantiate
      * @param string $refInstance The optional refInstance class to inject on ctor
-     * 
+     *
      * @return \AppserverIo\Lab\Bootstrap\array
      * @Synchronized
      */

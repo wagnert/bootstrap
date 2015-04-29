@@ -29,19 +29,18 @@ namespace AppserverIo\Lab\Bootstrap;
  * @link      https://github.com/appserver-io-lab/bootstrap
  * @link      http://www.appserver.io
  */
-
 class Storage
 {
     /**
      * Defines internal data storage
-     * 
+     *
      * @var array
      */
     public $data = array();
     
     /**
      * Returns whole data storage
-     * 
+     *
      * @return array
      */
     public function all()
@@ -51,11 +50,11 @@ class Storage
     
     /**
      * Sets value for specific key with optional subkey
-     * 
+     *
      * @param string $key    The key to set value for
      * @param mixed  $value  The value to set
      * @param string $subKey The optional subKey to set value for
-     * 
+     *
      * @return void
      * @Synchronized
      */
@@ -70,10 +69,10 @@ class Storage
     
     /**
      * Gets value for specific key with optional subkey
-     * 
+     *
      * @param string $key    The key to set value for
      * @param string $subKey The optional subKey to set value for
-     * 
+     *
      * @return mixed
      */
     public function get($key, $subKey = null)
@@ -87,10 +86,10 @@ class Storage
     
     /**
      * Checks if specific key with options subkey exists
-     * 
+     *
      * @param string $key    The key to set value for
      * @param string $subKey The optional subKey to set value for
-     * 
+     *
      * @return bool
      */
     public function has($key, $subKey = null)
@@ -104,13 +103,14 @@ class Storage
     
     /**
      * Deletes specific key with options subkey entry in data
-     * 
+     *
      * @param string $key    The key to set value for
      * @param string $subKey The optional subKey to set value for
-     * 
+     *
      * @return void
      */
-    public function del($key, $subKey = null) {
+    public function del($key, $subKey = null)
+    {
         if (!is_null($subKey) && (is_array($this->data[$key]))) {
             unset($this->data[$key][$subKey]);
         } else {

@@ -32,25 +32,25 @@ class Logger
 {
     /**
      * Defines log formats as array
-     * 
+     *
      * @var array
      */
     public $logFormats;
     
     /**
      * Defines log streams as array
-     * 
+     *
      * @var array
      */
     public $logStreams;
 
     /**
      * Registeres given logstream with logformat
-     * 
+     *
      * @param string $name      The streams name
      * @param mixed  $logStream The streamhandle to use
      * @param string $logFormat The log formate to use
-     * 
+     *
      * @return void
      */
     public function attachLogstream($name, $logStream, $logFormat = "%s\r\n")
