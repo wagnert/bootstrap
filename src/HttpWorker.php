@@ -22,7 +22,7 @@ namespace AppserverIo\Lab\Bootstrap;
 
 /**
  * Dummy HTTP worker implementation.
-
+ *
  * @author    Tim Wagner <tw@appserver.io>
  * @copyright 2015 TechDivision GmbH <info@appserver.io>
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)

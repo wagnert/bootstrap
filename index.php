@@ -21,6 +21,8 @@
 
 namespace AppserverIo\Lab\Bootstrap;
 
+use AppserverIo\Concurrency\ExecutorService;
+
 // define a all constants appserver base directory
 define('APPSERVER_BP', __DIR__);
 
@@ -38,16 +40,19 @@ define('SERVER_AUTOLOADER', $autoloaderFile);
 // include the autoloader file
 require SERVER_AUTOLOADER;
 
-// initialize the storage for the log fromats/streams
-$logFormats = new \Stackable();
-$logStreams = new \Stackable();
+// init executor service
+ExecutorService::__init(SERVER_AUTOLOADER);
+// init simple userland stackable like storage object
+$childs = ExecutorService::__newFromEntity('\AppserverIo\Lab\Bootstrap\Storage', 'childs');
+// init service factory
+ExecutorService::__newFromEntity('\AppserverIo\Lab\Bootstrap\ServiceFactory', 'services');
+// init logger
+ExecutorService::__newFromEntity('\AppserverIo\Lab\Bootstrap\Logger', 'logger');
 
-// initialize the storage for the runlevels
-$childs = new \Stackable();
 foreach (ApplicationServer::$runlevels as $runlevel) {
-    $childs[$runlevel] = new \Stackable();
+    $childs->set($runlevel, array());
 }
 
 // initialize and start the application server
-$applicationServer = new ApplicationServer($logStreams, $logFormats, $childs);
+$applicationServer = new ApplicationServer();
 $applicationServer->join();
