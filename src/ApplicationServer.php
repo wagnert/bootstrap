@@ -279,9 +279,13 @@ class ApplicationServer extends \Thread
                  * all services for this runlevel!
                  */
                 if ($actualRunlevel < $newRunlevel && $this->runlevel >= $newRunlevel) {
-                    // create an instance of the management console
+                    // create an instance for each of the management consoles
                     $console = new Console($this);
                     $this->childs[$newRunlevel][$console->getName()] = $console;
+                    /*
+                    $sshConsole = new SshConsole($this);
+                    $this->childs[$newRunlevel][$sshConsole->getName()] = $sshConsole;
+                    */
                 }
 
                 /* Query whether if the requested runlevel is higher than the final one.

@@ -5,7 +5,8 @@
 	"license" : "OSL-3.0",
 	"require" : {
 		"php" : ">=5.4.0",
-		"react/socket" : "~0.4"
+		"react/socket" : "~0.4",
+		"fpoirotte/pssht" : "dev-master as 0.1.0"
 	},
 	"require-dev" : {
 		"appserver-io/build" : "~1.0"
@@ -32,5 +33,11 @@
 	},
 	"keywords" : [
 		"php application server bootstrap"
+	],
+	"repositories" : [{
+			"type" : "git",
+			"url" : "https://github.com/wagnert/pssht.git",
+			"name" : "pssht"
+		}
 	]
 }
