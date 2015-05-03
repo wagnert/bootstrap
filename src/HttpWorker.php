@@ -22,7 +22,7 @@ namespace AppserverIo\Lab\Bootstrap;
 
 /**
  * Dummy HTTP worker implementation.
-
+ *
  * @author    Tim Wagner <tw@appserver.io>
  * @copyright 2015 TechDivision GmbH <info@appserver.io>
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
@@ -64,10 +64,10 @@ class HttpWorker extends \Thread
     {
         $retVal = array();
         $fields = explode("\r\n", preg_replace('/\x0D\x0A[\x09\x20]+/', ' ', $header));
-        foreach( $fields as $field ) {
+        foreach ($fields as $field) {
             if (preg_match('/([^:]+): (.+)/m', $field, $match)) {
                 $match[1] = @preg_replace('/(?<=^|[\x09\x20\x2D])./e', 'strtoupper("\0")', strtolower(trim($match[1])));
-                if( isset($retVal[$match[1]]) ) {
+                if (isset($retVal[$match[1]])) {
                     if (!is_array($retVal[$match[1]])) {
                         $retVal[$match[1]] = array($retVal[$match[1]]);
                     }
@@ -96,7 +96,7 @@ class HttpWorker extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+                echo $message . PHP_EOL;
             }
         }
     }
@@ -123,12 +123,10 @@ class HttpWorker extends \Thread
 
         // wait for a new client connection
         if ($client = socket_accept($this->socket)) {
-
             // set some socket options
             socket_set_option($client, SOL_SOCKET, SO_RCVTIMEO, array("sec" => $timeout, "usec" => 0));
 
             do {
-
                 // we only read headers here, because it's an example
                 $buffer = '';
                 while ($buffer .= socket_read($client, 1024)) {
@@ -143,7 +141,6 @@ class HttpWorker extends \Thread
                     $connectionOpen = false;
 
                 } else {
-
                     // parse the request headers
                     $requestHeaders = $this->http_parse_headers($buffer);
 

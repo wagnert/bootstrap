@@ -22,7 +22,7 @@ namespace AppserverIo\Lab\Bootstrap;
 
 /**
  * Dummy HTTP server implementation.
-
+ *
  * @author    Tim Wagner <tw@appserver.io>
  * @copyright 2015 TechDivision GmbH <info@appserver.io>
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
@@ -49,7 +49,7 @@ class HttpServer extends \Thread
      *
      * @return string The service name
      */
-    public function getName()
+    public static function getName()
     {
         return 'http';
     }
@@ -83,7 +83,7 @@ class HttpServer extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+                echo $message . PHP_EOL;
             }
         }
     }
@@ -115,7 +115,6 @@ class HttpServer extends \Thread
 
         // query whether the socket has been created or not
         if ($socket) {
-
             // we start 5 worker threads here
             $worker = 0;
             while (++ $worker < 5) {

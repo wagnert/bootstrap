@@ -22,7 +22,7 @@ namespace AppserverIo\Lab\Bootstrap;
 
 /**
  * A dummy management console implementation using a React PHP socket server.
-
+ *
  * @author    Tim Wagner <tw@appserver.io>
  * @copyright 2015 TechDivision GmbH <info@appserver.io>
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
@@ -64,7 +64,7 @@ class Console extends \Thread
      *
      * @return string The service name
      */
-    public function getName()
+    public static function getName()
     {
         return 'console';
     }
@@ -85,7 +85,7 @@ class Console extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               echo $message . PHP_EOL;
+                echo $message . PHP_EOL;
             }
         }
     }
@@ -123,9 +123,6 @@ class Console extends \Thread
 
         // wait for connections
         $socket->on('connection', function ($conn) use ($applicationServer) {
-
-            // attach the log stream for this connection
-            // $applicationServer->attachLogStream($conn->getRemoteAddress(), $conn->stream);
 
             // write the appserver.io logo to the console
             $conn->write(Console::$logo);

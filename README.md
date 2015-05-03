@@ -4,6 +4,11 @@ Prototype project for a appserver.io Linux style bootstrap process.
 
 The project shows how the runlevels, defined in [#624](appserver-io/appserver#624), could be implemented. Beside the runlevels, it provides an example how a user switch could be implemented and a console service implementation that allows connection and command execution by using telnet.
 
+## Issues
+In order to bundle our efforts we would like to collect all issues regarding this package in [the main project repository's issue tracker](https://github.com/appserver-io/appserver/issues).
+Please reference the originating repository as the first element of the issue title e.g.:
+`[appserver-io/<ORIGINATING_REPO>] A issue I am having`
+
 ## Switching between Runlevels
 
 To change between the runlevels, the prototype provides a simple telenet interface that allows to enter the `init` command. The command needs one argument, that has to be the requested runlevel. When the command and the requested runlevel has been entered, the application server switches to the requested runlevel. If runlevel 0 has been requested, the application server will be shutdown.

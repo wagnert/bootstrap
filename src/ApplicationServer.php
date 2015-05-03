@@ -20,11 +20,13 @@
 
 namespace AppserverIo\Lab\Bootstrap;
 
+use AppserverIo\Concurrency\ExecutorService;
+
 /**
  * This is the main server class that starts the application server
  * and creates a separate thread for each container found in the
  * configuration file.
-
+ *
  * @author    Tim Wagner <tw@appserver.io>
  * @copyright 2015 TechDivision GmbH <info@appserver.io>
  * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
@@ -64,12 +66,8 @@ class ApplicationServer extends \Thread
 
     /**
      * Initialize and start the application server.
-     *
-     * @param \Stackable $logStreams The available log streams
-     * @param \Stackable $logFormats The available log formats
-     * @param \Stackable $childs     The storage to bind the services to
      */
-    public function __construct($logStreams, $logFormats, $childs)
+    public function __construct()
     {
 
         // create a mutex to lock an comman
@@ -79,22 +77,16 @@ class ApplicationServer extends \Thread
         $this->switching = true;
 
         // initialize the members
-        $this->childs = $childs;
-        $this->logStreams = $logStreams;
-        $this->logFormats = $logFormats;
+        $this->childs = ExecutorService::__getEntity('childs');
+        $this->services = ExecutorService::__getEntity('services');
+        $this->logger = ExecutorService::__getEntity('logger');
         $this->runlevel = ApplicationServer::ADMINISTRATION;
 
         // by default, we want to log to the STDOUT
-        $this->attachLogStream('default', fopen('php://stdout', 'rw'));
+        $this->logger->attachLogStream('default', 'php://stdout');
 
         // start the application server
-        $this->start();
-    }
-
-    public function attachLogstream($name, $logStream, $logFormat = "%s\r\n")
-    {
-        $this->logFormats[$name] = $logFormat;
-        $this->logStreams[$name] = $logStream;
+        $this->start(PTHREADS_INHERIT_ALL | PTHREADS_ALLOW_GLOBALS);
     }
 
     /**
@@ -107,11 +99,7 @@ class ApplicationServer extends \Thread
      */
     protected function log($message)
     {
-        foreach ($this->logStreams as $name => $logStream) {
-            if (is_resource($logStream)) {
-                fwrite($logStream, sprintf($this->logFormats[$name], $message));
-            }
-        }
+        $this->logger->log($message);
     }
 
     /**
@@ -156,7 +144,7 @@ class ApplicationServer extends \Thread
             extract($lastError);
             // query whether we've a fatal/user error
             if ($type === E_ERROR || $type === E_USER_ERROR) {
-               $this->log($message);
+                $this->log($message);
             }
         }
     }
@@ -183,9 +171,7 @@ class ApplicationServer extends \Thread
         $actualRunlevel = 0;
 
         do {
-
             try {
-
                 // check if the actual runlevel === the requested one
                 if ($actualRunlevel == $this->runlevel) {
                     // print a message and wait
@@ -230,13 +216,25 @@ class ApplicationServer extends \Thread
      */
     protected function stopAllServicesForRunlevel($runlevel)
     {
-
         // iterate over all services and stop them
-        foreach ($this->childs[$runlevel] as $name => $child) {
+        foreach (array_keys($this->childs->get($runlevel)) as $name) {
             // stop, kill and unset the service instance
-            $this->childs[$runlevel][$name]->stop();
-            $this->childs[$runlevel][$name]->kill();
-            unset ($this->childs[$runlevel][$name]);
+            $this->childs->get($runlevel, $name)->stop();
+            $this->childs->get($runlevel, $name)->kill();
+            $this->childs->del($runlevel, $name);
+
+            /*
+             * Onother possibility is to send a closure which is executed entirely in
+             * its entity executorservice context
+
+            // invoke closure to run within entity context
+            $this->childs->__invoke(function($self) use($runlevel, $name) {
+                // $self is our entity instance
+                $self->get($runlevel, $name)->stop();
+                $self->get($runlevel, $name)->kill();
+                $self->del($runlevel, $name);
+            });
+            */
 
             // print a message that the service has been stopped
             $this->log("Successfully stopped service $name");
@@ -280,11 +278,11 @@ class ApplicationServer extends \Thread
                  */
                 if ($actualRunlevel < $newRunlevel && $this->runlevel >= $newRunlevel) {
                     // create an instance for each of the management consoles
-                    $console = new Console($this);
-                    $this->childs[$newRunlevel][$console->getName()] = $console;
+                    $console = $this->services->get('\AppserverIo\Lab\Bootstrap\Console', $this);
+                    $this->childs->set($newRunlevel, $console, $console->getName());
                     /*
-                    $sshConsole = new SshConsole($this);
-                    $this->childs[$newRunlevel][$sshConsole->getName()] = $sshConsole;
+                    $sshConsole = $this->services->get('\AppserverIo\Lab\Bootstrap\SshConsole', $this);
+                    $this->childs->set($newRunlevel, $sshConsole, $sshConsole->getName());
                     */
                 }
 
@@ -311,16 +309,9 @@ class ApplicationServer extends \Thread
                  * we've to start all services for this runlevel!
                  */
                 if ($actualRunlevel < $newRunlevel && $this->runlevel >= $newRunlevel) {
-                    // create an instance of the HTTP server
-                    $httpServer = new HttpServer();
-
-                    // we've to wait until the service has been started
-                    while ($httpServer->running === false) {
-                        sleep(1);
-                    }
-
-                    // attach the HTTP server service
-                    $this->childs[$newRunlevel][$httpServer->getName()] = $httpServer;
+                    // create an instance of the HTTP server service
+                    $httpServer = $this->services->get('\AppserverIo\Lab\Bootstrap\HttpServer');
+                    $this->childs->set($newRunlevel, $httpServer, $httpServer->getName());
                 }
 
                 /* Query whether if the requested runlevel is higher than the final one.
