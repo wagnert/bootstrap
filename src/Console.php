@@ -124,9 +124,6 @@ class Console extends \Thread
         // wait for connections
         $socket->on('connection', function ($conn) use ($applicationServer) {
 
-            // attach the log stream for this connection
-            // $applicationServer->attachLogStream($conn->getRemoteAddress(), $conn->stream);
-
             // write the appserver.io logo to the console
             $conn->write(Console::$logo);
             $conn->write("$ ");

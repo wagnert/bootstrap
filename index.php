@@ -50,4 +50,11 @@ foreach (ApplicationServer::$runlevels as $runlevel) {
 
 // initialize and start the application server
 $applicationServer = new ApplicationServer($logStreams, $logFormats, $childs);
+
+// wait till the server has been shutdown
+while ($applicationServer->isRunning()) {
+    sleep(1);
+}
+
+// wait till all threads has been finished
 $applicationServer->join();

@@ -72,11 +72,11 @@ class ApplicationServer extends \Thread
     public function __construct($logStreams, $logFormats, $childs)
     {
 
-        // create a mutex to lock an comman
-        $this->mutex = \Mutex::create();
-
         // set to TRUE, because we swith to runlevel 1 immediately
         $this->switching = true;
+
+        // set to TRUE, to keep the server running
+        $this->keepRunning = true;
 
         // initialize the members
         $this->childs = $childs;
@@ -91,6 +91,15 @@ class ApplicationServer extends \Thread
         $this->start();
     }
 
+    /**
+     * Attabes a new log stream.
+     *
+     * @param string   $name      The unique name of the stream
+     * @param resource $logStream The stream resource
+     * @param string   $logFormat The format to log the messages with
+     *
+     * @return void
+     */
     public function attachLogstream($name, $logStream, $logFormat = "%s\r\n")
     {
         $this->logFormats[$name] = $logFormat;
@@ -115,6 +124,16 @@ class ApplicationServer extends \Thread
     }
 
     /**
+     * Queries whether the application server is running or not.
+     *
+     * @return boolean TRUE if the server is running, else FALSE
+     */
+    public function isRunning()
+    {
+        return $this->keepRunning;
+    }
+
+    /**
      * The runlevel to switch to.
      *
      * @param integer $runlevel The new runlevel to switch to
@@ -124,20 +143,22 @@ class ApplicationServer extends \Thread
     public function init($runlevel = ApplicationServer::FULL)
     {
 
-        // lock the server to execute command
-        \Mutex::lock($this->mutex);
+        // switch to the new runlevel
+        $this->synchronized(function ($self, $newRunlevel) {
 
-        // wait till a previos command has been finished
-        while ($this->switching === true) {
-            sleep(1);
-        }
+            // wait till the previous commands has been finished
+            while ($self->switching === true) {
+                sleep(1);
+            }
 
-        // lock process
-        $this->switching = true;
-        $this->runlevel = $runlevel;
+            // lock process
+            $self->switching = true;
+            $self->runlevel = $newRunlevel;
 
-        // unlock the server to execute next command
-        \Mutex::unlock($this->mutex);
+            // notify the AS to execute the command
+            $self->notify();
+
+        }, $this, $runlevel);
     }
 
     /**
@@ -176,7 +197,7 @@ class ApplicationServer extends \Thread
         require SERVER_AUTOLOADER;
 
         // flag to keep the server running or to stop it
-        $keepRunning = true;
+        $this->keepRunning;;
 
         // initialize the runlevels
         $newRunlevel = 0;
@@ -189,11 +210,15 @@ class ApplicationServer extends \Thread
                 // check if the actual runlevel === the requested one
                 if ($actualRunlevel == $this->runlevel) {
                     // print a message and wait
-                    $this->log("Now start waiting in runlevel $actualRunlevel!!!");
+                    $this->log("Successfully switched to runlevel $actualRunlevel!!!");
 
                     // singal that we've finished switching the runlevels and wait
                     $this->switching = false;
-                    sleep(1);
+
+                    // wait for a new command
+                    $this->synchronized(function ($self) {
+                        $self->wait();
+                    }, $this);
                 }
 
                 // if the actual runlevel is lower, raise the new runlevel by one
@@ -208,7 +233,7 @@ class ApplicationServer extends \Thread
 
                 // if the actual runlevel differs from the requested one, switch it
                 if ($actualRunlevel <> $this->runlevel) {
-                    $keepRunning = $this->switchRunlevel($actualRunlevel, $newRunlevel);
+                    $this->keepRunning = $this->switchRunlevel($actualRunlevel, $newRunlevel);
                 }
 
                 // update the actual runlevel
@@ -218,7 +243,7 @@ class ApplicationServer extends \Thread
                 $this->log($e->getMessage());
             }
 
-        } while ($keepRunning);
+        } while ($this->keepRunning);
     }
 
     /**
